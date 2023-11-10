@@ -8,7 +8,8 @@ from keras.callbacks import EarlyStopping
 from keras.utils import plot_model
 from keras.optimizers import Adam,Adagrad,Adadelta,Nadam,Adamax,SGD,RMSprop
 from keras.losses import MSE,MAE,MAPE,MSLE,KLD,squared_hinge,hinge,categorical_hinge,categorical_crossentropy,sparse_categorical_crossentropy,kullback_leibler_divergence,poisson
-from keras.layers.advanced_activations import PReLU
+# from keras.layers.advanced_activations import PReLU
+from keras.layers import PReLU
 import data_helper
 import numpy as np
 import keras
@@ -118,13 +119,13 @@ class EncoderDNN(object):
                 #正则化
                 # layer.kernet_regularizer = keras.regularizers.l2(l=0.0001)
 
-            floor_net_input = Reshape((self.floor_base_model.output_shape[1], 1))(self.floor_base_model.output)
-            floor_net_input=Dropout(self.dropout)(floor_net_input)
-            floor_net = Conv1D(99, 22,activation='elu')(floor_net_input)
-            floor_net = Conv1D(66, 22, activation='elu')(floor_net)
-            floor_net = Conv1D(33, 22,activation='elu')(floor_net)
-            floor_net = Flatten()(floor_net)
-            output1 = Dense(5, activation='softmax')(floor_net)
+            floor_net_input = Reshape((self.floor_base_model.output_shape[1], 1), name = 'floor_reshape')(self.floor_base_model.output)
+            floor_net_input=Dropout(self.dropout , name = 'floor_dropput')(floor_net_input)
+            floor_net = Conv1D(99, 22,activation='elu', name = 'floor_conv99-22')(floor_net_input)
+            floor_net = Conv1D(66, 22, activation='elu', name = 'floor_conv66-22')(floor_net)
+            floor_net = Conv1D(33, 22,activation='elu', name = 'floor_conv33-22')(floor_net)
+            floor_net = Flatten(name = 'floor_flatten')(floor_net)
+            output1 = Dense(5, activation='softmax', name = 'floor_dense5')(floor_net)
 
             self.floor_model = Model(inputs=self.floor_base_model.input, outputs=output1)
 
@@ -146,13 +147,13 @@ class EncoderDNN(object):
                 # 正则化
                 # layer.kernet_regularizer = keras.regularizers.l2(l=0.0001)
 
-            position_net_input = Reshape((self.position_base_model.output_shape[1], 1))(self.position_base_model.output)
-            position_net_input = Dropout(self.dropout)(position_net_input)
-            position_net = Conv1D(99, 22, activation='elu')(position_net_input)
-            position_net = Conv1D(66, 22, activation='elu')(position_net)
-            position_net = Conv1D(33,22, activation='elu')(position_net)
-            position_net = Flatten()(position_net)
-            self.position_predict_output = Dense(2, activation='elu')(position_net)
+            position_net_input = Reshape((self.position_base_model.output_shape[1], 1), name = 'location_reshape')(self.position_base_model.output)
+            position_net_input = Dropout(self.dropout, name = 'location_dropout')(position_net_input)
+            position_net = Conv1D(99, 22, activation='elu', name = 'location_conv99-22')(position_net_input)
+            position_net = Conv1D(66, 22, activation='elu', name = 'location_conv66-22')(position_net)
+            position_net = Conv1D(33,22, activation='elu', name = 'location_conv33-22')(position_net)
+            position_net = Flatten(name = 'location_flatten')(position_net)
+            self.position_predict_output = Dense(2, activation='elu', name = 'location_dense2')(position_net)
             self.position_model = Model(inputs=self.position_base_model.input, outputs=self.position_predict_output)
 
 
@@ -166,8 +167,8 @@ class EncoderDNN(object):
                 self.building_base_model=self.bottleneck_model_256_128
             for layer in self.building_base_model.layers:
                 layer.trainable = True
-            building_net = Dense(33)(self.building_base_model.output)
-            self.buildingID_predict_output=Dense(3,activation='softmax')(building_net)
+            building_net = Dense(33 , name = 'building_dense33')(self.building_base_model.output)
+            self.buildingID_predict_output=Dense(3,activation='softmax', name = 'building_predict_dense3')(building_net)
             self.building_model= Model(inputs=self.building_base_model.input, outputs=self.buildingID_predict_output)
 
     def _preprocess(self, x, y, valid_x, valid_y):
@@ -214,7 +215,8 @@ class EncoderDNN(object):
                 optimizer=self.opt
             )
             h_pos=self.position_model.fit(self.normalize_x, self.position,validation_data=(self.normalize_valid_x,self.position_valid),epochs=self.epoch_position, batch_size=66)#,callbacks=[early_stopping])
-            self.position_model.save(os.path.join(base_dir,('Location_model/Location_model.h5')))
+            # self.position_model.save(os.path.join(base_dir,('Location_model/Location_model.h5')))
+            self.position_model.save(os.path.join(base_dir,('Location_model/Location_model.tf')))
 
         self.floor_layers = '99-22,66-22,33-22'
 ##################fit_floor
@@ -236,8 +238,10 @@ class EncoderDNN(object):
             h_floor=self.floor_model.fit(self.normalize_x, data_helper.oneHotEncode(self.floorID_y), epochs=self.epoch_floor, batch_size=66,
                                  validation_data=(
                                  self.normalize_valid_x, data_helper.oneHotEncode(self.floorID_valid_y)))#,callbacks=[early_stopping])  # ,tensorbd])
+            # self.floor_model.save(
+            #     os.path.join(Floor_model_dir,('floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').h5')))
             self.floor_model.save(
-                os.path.join(Floor_model_dir,('floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').h5')))
+                os.path.join(Floor_model_dir,('floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').tf')))
 ##################fit_new_floor
         if Train_New_Floor:
             # adamm = Adam()
@@ -252,7 +256,8 @@ class EncoderDNN(object):
                                      self.normalize_valid_x, data_helper.oneHotEncode(self.floorID_valid_y)),
                                  callbacks=[early_stopping])  # ,tensorbd])
             self.new_floor_model.save(
-                os.path.join(Floor_model_dir, ('new_floor.h5')))
+                # os.path.join(Floor_model_dir, ('new_floor.h5')))
+                os.path.join(Floor_model_dir, ('new_floor.tf')))
 
 ####################fit_Building
 
@@ -264,7 +269,8 @@ class EncoderDNN(object):
                 metrics=['accuracy']
             )
             self.building_model.fit(self.normalize_x, data_helper.oneHotEncode(self.buildingID_y),validation_data=(self.normalize_valid_x,data_helper.oneHotEncode(self.buildingID_valid_y)),epochs=self.epoch_building, batch_size=66)#,callbacks=[early_stopping])
-            self.building_model.save(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.h5')))
+            # self.building_model.save(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.h5')))
+            self.building_model.save(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.tf')))
         re=[]
         if Train_AE:
             re.append(h_AE)
@@ -288,7 +294,8 @@ class EncoderDNN(object):
 
 #################predict_Location
         if Run_Location:
-            self.position_model = load_model('Location_model/Location_model.h5')
+            # self.position_model = load_model('Location_model/Location_model.h5')
+            self.position_model = load_model('Location_model/Location_model.tf')
             predict_Location= self.position_model.predict(x)
             predict_longitude, predict_latitude = self.normY.reverse_normalizeY(predict_Location[:, 0],
                                                                              predict_Location[:, 1])
@@ -298,13 +305,15 @@ class EncoderDNN(object):
             predict_floorID = self.new_floor_model.predict(x)
             predict_floorID = data_helper.oneHotDecode(predict_floorID)
         elif Run_Floor:
-            self.floor_model = load_model('Floor_model/floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').h5')
+            # self.floor_model = load_model('Floor_model/floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').h5')
+            self.floor_model = load_model('Floor_model/floor_model(AE_' + self.AE_floor_bottleneck + ')-Conv(' + self.floor_layers + ').tf')
             predict_floorID = self.floor_model.predict(x)
             predict_floorID = data_helper.oneHotDecode(predict_floorID)
 
 ################predict_building
         if Run_Building:
-            self.building_model= load_model(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.h5')))
+            # self.building_model= load_model(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.h5')))
+            self.building_model= load_model(os.path.join(Building_model_dir,('building_model(AE_' + self.AE_building_bottleneck + ')-3.tf')))
             predict_buildingID = self.building_model.predict(x)
             predict_buildingID = data_helper.oneHotDecode(predict_buildingID)
 

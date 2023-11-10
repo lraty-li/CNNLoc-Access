@@ -11,10 +11,14 @@ from keras.optimizers import Adam,Adagrad,Adadelta,Nadam,Adamax,SGD,RMSprop
 from keras.losses import MSE,MAE,MAPE,MSLE,KLD,squared_hinge,hinge,categorical_hinge,categorical_crossentropy,sparse_categorical_crossentropy,kullback_leibler_divergence,poisson
 
 os.environ["CUDA_VISIBLE_DEVICES"]='0'
-from keras.backend.tensorflow_backend import set_session
-config=tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction=0.9
-set_session(tf.Session(config=config))
+# from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
+# config=tf.ConfigProto()
+config=tf.compat.v1.ConfigProto()
+# config.gpu_options.per_process_gpu_memory_fraction=0.9
+tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.9)
+# set_session(tf.Session(config=config))
+set_session(tf.compat.v1.Session(config=config))
 
 # OPT=[Adam,Adagrad,Nadam,Adamax,RMSprop]
 OPT=[RMSprop,Adamax]

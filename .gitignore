@@ -1,0 +1,10 @@
+TestData.csv
+TrainingData.csv
+ValuationData.csv
+__pycache__/encoder_model.cpython-310.pyc
+__pycache__/data_helper.cpython-310.pyc
+Location_model/Location_model.tf
+Location_model/Location_model.h5
+Floor_model/floor_model(AE_256_128)-Conv(99-22,66-22,33-22).tf
+Floor_model/floor_model(AE_256_128)-Conv(99-22,66-22,33-22).h5
+Building_model/building_model(AE_256_128)-3.tf

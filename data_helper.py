@@ -17,8 +17,10 @@ def load_test_data(valid_file_name):
 #input data separated before
 def load_data_perspective(file_name):
     data_frame = pd.read_csv(file_name)
-    data_x = data_frame.get_values().T[:520].T
-    data_y = data_frame.get_values().T[[520, 521, 522, 523], :].T
+    # data_x = data_frame.get_values().T[:520].T
+    data_x = data_frame.to_numpy().T[:520].T
+    # data_y = data_frame.get_values().T[[520, 521, 522, 523], :].T
+    data_y = data_frame.to_numpy().T[[520, 521, 522, 523], :].T
     return data_x, data_y
 
 #preprocess training data
@@ -29,8 +31,10 @@ def load_grouped_data(trainingData):
     # data=data.replace(100,-110)
     data=data.groupby(['LONGITUDE','LATITUDE','FLOOR','BUILDINGID'],as_index=False).median()
     # data_frame=data.replace(-1000,100)
-    data_x = data.get_values().T[4:524].T
-    data_y = data.get_values().T[[0,1,2,3], :].T
+    # data_x = data.get_values().T[4:524].T
+    data_x = data.to_numpy().T[4:524].T
+    # data_y = data.get_values().T[[0,1,2,3], :].T
+    data_y = data.to_numpy().T[[0,1,2,3], :].T
 
     return data_x, data_y
 # load_grouped_data(train_csv_path)
@@ -54,12 +58,18 @@ def load(train_file_name, valid_file_name):
     valid_data_trame = valid_data_trame.append(sample_row)
     train_data = rest_data_frame
 
-    training_x = train_data.get_values().T[:520].T
-    training_y = train_data.get_values().T[[520, 521, 522, 523], :].T
-    validation_x = valid_data_trame.get_values().T[:520].T
-    validation_y = valid_data_trame.get_values().T[[520, 521, 522, 523], :].T
-    testing_x = test_data_frame.get_values().T[:520].T
-    testing_y = test_data_frame.get_values().T[[520, 521, 522, 523], :].T
+    training_x = train_data.to_numpy().T[:520].T
+    training_y = train_data.to_numpy().T[[520, 521, 522, 523], :].T
+    validation_x = valid_data_trame.to_numpy().T[:520].T
+    validation_y = valid_data_trame.to_numpy().T[[520, 521, 522, 523], :].T
+    testing_x = test_data_frame.to_numpy().T[:520].T
+    testing_y = test_data_frame.to_numpy().T[[520, 521, 522, 523], :].T
+    # training_x = train_data.get_values().T[:520].T
+    # training_y = train_data.get_values().T[[520, 521, 522, 523], :].T
+    # validation_x = valid_data_trame.get_values().T[:520].T
+    # validation_y = valid_data_trame.get_values().T[[520, 521, 522, 523], :].T
+    # testing_x = test_data_frame.get_values().T[:520].T
+    # testing_y = test_data_frame.get_values().T[[520, 521, 522, 523], :].T
 
     return training_x,training_y,validation_x,validation_y,testing_x,testing_y
 
@@ -109,7 +119,8 @@ class norm_X():
 
 
 def normalizeX_powed(arr,b):
-    res = np.copy(arr).astype(np.float)
+    # res = np.copy(arr).astype(np.float)
+    res = np.copy(arr).astype('float32')
     for i in range(np.shape(res)[0]):
         for j in range(np.shape(res)[1]):
             if (res[i][j] >50)|(res[i][j]==None)|(res[i][j]<-95):
